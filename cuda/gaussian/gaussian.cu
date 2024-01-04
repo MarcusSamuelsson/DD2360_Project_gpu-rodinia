@@ -17,7 +17,9 @@
 #include <sys/time.h>
 #include "cuda.h"
 #include <string.h>
+#include <string>
 #include <math.h>
+#include <cuda_fp16.h>
 
 #ifdef TIMING
 #include "timing.h"
@@ -56,7 +58,8 @@ float init_time = 0, mem_alloc_time = 0, h2d_time = 0, kernel_time = 0,
       d2h_time = 0, close_time = 0, total_time = 0;
 #endif
 
-#define DataType float
+#define DataType double
+#define DataTypeString std::string("double")
 
 int Size;
 DataType *a, *b, *finalVec;
@@ -70,12 +73,13 @@ void ForwardSub();
 void BackSub();
 __global__ void Fan1(DataType *m, DataType *a, int Size, int t);
 __global__ void Fan2(DataType *m, DataType *a, DataType *b,int Size, int j1, int t);
-void InitMat(float *ary, int nrow, int ncol);
-void InitAry(float *ary, int ary_size);
-void PrintMat(float *ary, int nrow, int ncolumn);
-void PrintAry(float *ary, int ary_size);
+void InitMat(DataType *ary, int nrow, int ncol);
+void InitAry(DataType *ary, int ary_size);
+void PrintMat(DataType *ary, int nrow, int ncolumn);
+void PrintAry(DataType *ary, int ary_size);
 void PrintDeviceProperties();
 void checkCUDAError(const char *msg);
+void printVectorToFile(char *filename, DataType *ary, int ary_size);
 
 unsigned int totalKernelTime = 0;
 
@@ -105,7 +109,6 @@ create_matrix(DataType *m, int size){
 
 
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -205,6 +208,8 @@ int main(int argc, char *argv[])
     printf("\nTime total (including memory transfers)\t%f sec\n", time_total * 1e-6);
     printf("Time for CUDA kernels:\t%f sec\n",totalKernelTime * 1e-6);
     
+	printVectorToFile((DataTypeString + std::to_string(Size)).data(), finalVec, Size);
+
     /*printf("%d,%d\n",size,time_total);
     fprintf(stderr,"%d,%d\n",size,time_total);*/
     
@@ -434,7 +439,7 @@ void BackSub()
 	}
 }
 
-void InitMat(float *ary, int nrow, int ncol)
+void InitMat(DataType *ary, int nrow, int ncol)
 {
 	int i, j;
 	
@@ -449,7 +454,7 @@ void InitMat(float *ary, int nrow, int ncol)
  ** PrintMat() -- Print the contents of the matrix
  **------------------------------------------------------
  */
-void PrintMat(float *ary, int nrow, int ncol)
+void PrintMat(DataType *ary, int nrow, int ncol)
 {
 	int i, j;
 	
@@ -467,7 +472,7 @@ void PrintMat(float *ary, int nrow, int ncol)
  ** data from the data file
  **------------------------------------------------------
  */
-void InitAry(float *ary, int ary_size)
+void InitAry(DataType *ary, int ary_size)
 {
 	int i;
 	
@@ -480,7 +485,7 @@ void InitAry(float *ary, int ary_size)
  ** PrintAry() -- Print the contents of the array (vector)
  **------------------------------------------------------
  */
-void PrintAry(float *ary, int ary_size)
+void PrintAry(DataType *ary, int ary_size)
 {
 	int i;
 	for (i=0; i<ary_size; i++) {
@@ -499,3 +504,13 @@ void checkCUDAError(const char *msg)
     }                         
 }
 
+void printVectorToFile(char *filename, DataType *ary, int ary_size)
+{
+	int i;
+	FILE *fp = fopen(filename, "w");
+	for (i=0; i<ary_size; i++) {
+		fprintf(fp, "%.2f ", ary[i]);
+	}
+	fprintf(fp, "\n\n");
+	fclose(fp);
+}
