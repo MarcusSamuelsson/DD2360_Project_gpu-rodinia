@@ -1,5 +1,6 @@
 data/*
 !data/.gitkeep
+!data/gaussian/matrixGenerator.py
 
 *.o
 *.orig
