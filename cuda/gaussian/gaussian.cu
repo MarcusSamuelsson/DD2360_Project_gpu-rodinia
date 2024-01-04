@@ -56,9 +56,11 @@ float init_time = 0, mem_alloc_time = 0, h2d_time = 0, kernel_time = 0,
       d2h_time = 0, close_time = 0, total_time = 0;
 #endif
 
+#define DataType float
+
 int Size;
-float *a, *b, *finalVec;
-float *m;
+DataType *a, *b, *finalVec;
+DataType *m;
 
 FILE *fp;
 
@@ -66,8 +68,8 @@ void InitProblemOnce(char *filename);
 void InitPerRun();
 void ForwardSub();
 void BackSub();
-__global__ void Fan1(float *m, float *a, int Size, int t);
-__global__ void Fan2(float *m, float *a, float *b,int Size, int j1, int t);
+__global__ void Fan1(DataType *m, DataType *a, int Size, int t);
+__global__ void Fan2(DataType *m, DataType *a, DataType *b,int Size, int j1, int t);
 void InitMat(float *ary, int nrow, int ncol);
 void InitAry(float *ary, int ary_size);
 void PrintMat(float *ary, int nrow, int ncolumn);
@@ -79,7 +81,7 @@ unsigned int totalKernelTime = 0;
 
 // create both matrix and right hand side, Ke Wang 2013/08/12 11:51:06
 void
-create_matrix(float *m, int size){
+create_matrix(DataType *m, int size){
   int i,j;
   float lamda = -0.01;
   float coe[2*size-1];
@@ -150,14 +152,14 @@ int main(int argc, char *argv[])
               Size = atoi(argv[i]);
 	      printf("Create matrix internally in parse, size = %d \n", Size);
 
-	      a = (float *) malloc(Size * Size * sizeof(float));
+	      a = (DataType *) malloc(Size * Size * sizeof(DataType));
 	      create_matrix(a, Size);
 
-	      b = (float *) malloc(Size * sizeof(float));
+	      b = (DataType *) malloc(Size * sizeof(DataType));
 	      for (j =0; j< Size; j++)
 	    	b[j]=1.0;
 
-	      m = (float *) malloc(Size * Size * sizeof(float));
+	      m = (DataType *) malloc(Size * Size * sizeof(DataType));
               break;
             case 'f': // platform
               i++;
@@ -272,18 +274,18 @@ void InitProblemOnce(char *filename)
 	
 	fscanf(fp, "%d", &Size);	
 	 
-	a = (float *) malloc(Size * Size * sizeof(float));
+	a = (DataType *) malloc(Size * Size * sizeof(DataType));
 	 
 	InitMat(a, Size, Size);
 	//printf("The input matrix a is:\n");
 	//PrintMat(a, Size, Size);
-	b = (float *) malloc(Size * sizeof(float));
+	b = (DataType *) malloc(Size * sizeof(DataType));
 	
 	InitAry(b, Size);
 	//printf("The input array b is:\n");
 	//PrintAry(b, Size);
 		
-	 m = (float *) malloc(Size * Size * sizeof(float));
+	 m = (DataType *) malloc(Size * Size * sizeof(DataType));
 }
 
 /*------------------------------------------------------
@@ -306,7 +308,7 @@ void InitPerRun()
  ** of t which is defined on the ForwardSub().
  **-------------------------------------------------------
  */
-__global__ void Fan1(float *m_cuda, float *a_cuda, int Size, int t)
+__global__ void Fan1(DataType *m_cuda, DataType *a_cuda, int Size, int t)
 {   
 	//if(threadIdx.x + blockIdx.x * blockDim.x >= Size-1-t) printf(".");
 	//printf("blockIDx.x:%d,threadIdx.x:%d,Size:%d,t:%d,Size-1-t:%d\n",blockIdx.x,threadIdx.x,Size,t,Size-1-t);
@@ -320,7 +322,7 @@ __global__ void Fan1(float *m_cuda, float *a_cuda, int Size, int t)
  **-------------------------------------------------------
  */ 
 
-__global__ void Fan2(float *m_cuda, float *a_cuda, float *b_cuda,int Size, int j1, int t)
+__global__ void Fan2(DataType *m_cuda, DataType *a_cuda, DataType *b_cuda,int Size, int j1, int t)
 {
 	if(threadIdx.x + blockIdx.x * blockDim.x >= Size-1-t) return;
 	if(threadIdx.y + blockIdx.y * blockDim.y >= Size-t) return;
@@ -346,19 +348,19 @@ __global__ void Fan2(float *m_cuda, float *a_cuda, float *b_cuda,int Size, int j
 void ForwardSub()
 {
 	int t;
-    float *m_cuda,*a_cuda,*b_cuda;
+    DataType *m_cuda,*a_cuda,*b_cuda;
 	
 	// allocate memory on GPU
-	cudaMalloc((void **) &m_cuda, Size * Size * sizeof(float));
+	cudaMalloc((void **) &m_cuda, Size * Size * sizeof(DataType));
 	 
-	cudaMalloc((void **) &a_cuda, Size * Size * sizeof(float));
+	cudaMalloc((void **) &a_cuda, Size * Size * sizeof(DataType));
 	
-	cudaMalloc((void **) &b_cuda, Size * sizeof(float));	
+	cudaMalloc((void **) &b_cuda, Size * sizeof(DataType));	
 
 	// copy memory to GPU
-	cudaMemcpy(m_cuda, m, Size * Size * sizeof(float),cudaMemcpyHostToDevice );
-	cudaMemcpy(a_cuda, a, Size * Size * sizeof(float),cudaMemcpyHostToDevice );
-	cudaMemcpy(b_cuda, b, Size * sizeof(float),cudaMemcpyHostToDevice );
+	cudaMemcpy(m_cuda, m, Size * Size * sizeof(DataType),cudaMemcpyHostToDevice );
+	cudaMemcpy(a_cuda, a, Size * Size * sizeof(DataType),cudaMemcpyHostToDevice );
+	cudaMemcpy(b_cuda, b, Size * sizeof(DataType),cudaMemcpyHostToDevice );
 	
 	int block_size,grid_size;
 	
@@ -403,9 +405,9 @@ void ForwardSub()
 #endif
 
 	// copy memory back to CPU
-	cudaMemcpy(m, m_cuda, Size * Size * sizeof(float),cudaMemcpyDeviceToHost );
-	cudaMemcpy(a, a_cuda, Size * Size * sizeof(float),cudaMemcpyDeviceToHost );
-	cudaMemcpy(b, b_cuda, Size * sizeof(float),cudaMemcpyDeviceToHost );
+	cudaMemcpy(m, m_cuda, Size * Size * sizeof(DataType),cudaMemcpyDeviceToHost );
+	cudaMemcpy(a, a_cuda, Size * Size * sizeof(DataType),cudaMemcpyDeviceToHost );
+	cudaMemcpy(b, b_cuda, Size * sizeof(DataType),cudaMemcpyDeviceToHost );
 	cudaFree(m_cuda);
 	cudaFree(a_cuda);
 	cudaFree(b_cuda);
@@ -419,7 +421,7 @@ void ForwardSub()
 void BackSub()
 {
 	// create a new vector to hold the final answer
-	finalVec = (float *) malloc(Size * sizeof(float));
+	finalVec = (DataType *) malloc(Size * sizeof(DataType));
 	// solve "bottom up"
 	int i,j;
 	for(i=0;i<Size;i++){
