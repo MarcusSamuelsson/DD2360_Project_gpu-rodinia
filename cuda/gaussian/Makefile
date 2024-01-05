@@ -4,7 +4,7 @@ CC := $(CUDA_DIR)/bin/nvcc
 
 INCLUDE := $(CUDA_DIR)/include
 
-SRC = gaussian.cu
+SRC = gaussianDouble.cu
 EXE = gaussian
 
 release: $(SRC)
