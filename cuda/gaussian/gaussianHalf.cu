@@ -58,8 +58,8 @@ float init_time = 0, mem_alloc_time = 0, h2d_time = 0, kernel_time = 0,
       d2h_time = 0, close_time = 0, total_time = 0;
 #endif
 
-#define DataType double
-#define DataTypeString std::string("double")
+#define DataType half
+#define DataTypeString std::string("half")
 
 int Size;
 DataType *a, *b, *finalVec;
@@ -103,7 +103,9 @@ create_matrix(DataType *m, int size){
 
   for (i=0; i < size; i++) {
       for (j=0; j < size; j++) {
-	m[i*size+j]=coe[size-1-i+j];
+		m[i*size+j]=__float2half(coe[size-1-i+j]);
+		
+		printf("%f", m[i*size+j]);
       }
   }
 
@@ -156,6 +158,7 @@ int main(int argc, char *argv[])
 	      printf("Create matrix internally in parse, size = %d \n", Size);
 
 	      a = (DataType *) malloc(Size * Size * sizeof(DataType));
+		  printf("here!");
 	      create_matrix(a, Size);
 
 	      b = (DataType *) malloc(Size * sizeof(DataType));
@@ -180,7 +183,7 @@ int main(int argc, char *argv[])
     InitPerRun();
     //begin timing
     struct timeval time_start;
-    gettimeofday(&time_start, NULL);	
+    gettimeofday(&time_start, NULL);
     
     // run kernels
     ForwardSub();
@@ -329,6 +332,7 @@ __global__ void Fan1(DataType *m_cuda, DataType *a_cuda, int Size, int t)
 
 __global__ void Fan2(DataType *m_cuda, DataType *a_cuda, DataType *b_cuda,int Size, int j1, int t)
 {
+
 	if(threadIdx.x + blockIdx.x * blockDim.x >= Size-1-t) return;
 	if(threadIdx.y + blockIdx.y * blockDim.y >= Size-t) return;
 	
@@ -442,10 +446,13 @@ void BackSub()
 void InitMat(DataType *ary, int nrow, int ncol)
 {
 	int i, j;
+
+	float *temp = (float *) malloc(nrow * ncol * sizeof(float));
 	
 	for (i=0; i<nrow; i++) {
 		for (j=0; j<ncol; j++) {
-			fscanf(fp, "%f",  ary+Size*i+j);
+			fscanf(fp, "%f",  temp+ncol*i+j);
+			*(ary+Size*i+j) = __float2half(temp[ncol*i+j]);
 		}
 	}  
 }
@@ -460,7 +467,7 @@ void PrintMat(DataType *ary, int nrow, int ncol)
 	
 	for (i=0; i<nrow; i++) {
 		for (j=0; j<ncol; j++) {
-			printf("%8.2f ", *(ary+Size*i+j));
+			printf("%8.2f ", __half2float(*(ary+Size*i+j)));
 		}
 		printf("\n");
 	}
@@ -475,9 +482,12 @@ void PrintMat(DataType *ary, int nrow, int ncol)
 void InitAry(DataType *ary, int ary_size)
 {
 	int i;
-	
+
+	float *temp = (float *) malloc(ary_size * sizeof(float));
+
 	for (i=0; i<ary_size; i++) {
-		fscanf(fp, "%f",  &ary[i]);
+		fscanf(fp, "%f",  &temp[i]);
+		*(ary+i) = __float2half(temp[i]);
 	}
 }  
 
@@ -489,7 +499,7 @@ void PrintAry(DataType *ary, int ary_size)
 {
 	int i;
 	for (i=0; i<ary_size; i++) {
-		printf("%.2f ", ary[i]);
+		printf("%.2f ", __half2float(ary[i]));
 	}
 	printf("\n\n");
 }
@@ -509,7 +519,7 @@ void printVectorToFile(char *filename, DataType *ary, int ary_size)
 	int i;
 	FILE *fp = fopen(filename, "w");
 	for (i=0; i<ary_size; i++) {
-		fprintf(fp, "%.2f ", ary[i]);
+		fprintf(fp, "%.8f ", __half2float(ary[i]));
 	}
 	fprintf(fp, "\n\n");
 	fclose(fp);
