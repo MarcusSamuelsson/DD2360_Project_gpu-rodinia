@@ -436,7 +436,8 @@ void BackSub()
 		{
 			finalVec[Size-i-1]-=*(a+Size*(Size-i-1)+(Size-j-1)) * finalVec[Size-j-1];
 		}
-		finalVec[Size-i-1]=finalVec[Size-i-1]/ *(a+Size*(Size-i-1)+(Size-i-1));
+
+		finalVec[Size-i-1]=finalVec[Size-i-1] / *(a+Size*(Size-i-1)+(Size-i-1));
 	}
 }
 
@@ -510,7 +511,7 @@ void printVectorToFile(char *filename, DataType *ary, int ary_size)
 	int i;
 	FILE *fp = fopen(filename, "w");
 	for (i=0; i<ary_size; i++) {
-		fprintf(fp, "%.8lf ", ary[i]);
+		fprintf(fp, "%.8g ", ary[i]);
 	}
 	fprintf(fp, "\n\n");
 	fclose(fp);
