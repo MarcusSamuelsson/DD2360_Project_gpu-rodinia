@@ -58,8 +58,8 @@ float init_time = 0, mem_alloc_time = 0, h2d_time = 0, kernel_time = 0,
       d2h_time = 0, close_time = 0, total_time = 0;
 #endif
 
-#define DataType float
-#define DataTypeString std::string("float")
+#define DataType double
+#define DataTypeString std::string("double")
 
 int Size;
 DataType *a, *b, *finalVec;
@@ -282,6 +282,7 @@ void InitProblemOnce(char *filename)
 	a = (DataType *) malloc(Size * Size * sizeof(DataType));
 	 
 	InitMat(a, Size, Size);
+	
 	//printf("The input matrix a is:\n");
 	//PrintMat(a, Size, Size);
 	b = (DataType *) malloc(Size * sizeof(DataType));
@@ -445,9 +446,9 @@ void InitMat(DataType *ary, int nrow, int ncol)
 	
 	for (i=0; i<nrow; i++) {
 		for (j=0; j<ncol; j++) {
-			fscanf(fp, "%f",  ary+Size*i+j);
+			fscanf(fp, "%lf",  ary+Size*i+j);
 		}
-	}  
+	}
 }
 
 /*------------------------------------------------------
@@ -460,7 +461,7 @@ void PrintMat(DataType *ary, int nrow, int ncol)
 	
 	for (i=0; i<nrow; i++) {
 		for (j=0; j<ncol; j++) {
-			printf("%8.2f ", *(ary+Size*i+j));
+			printf("%8.8lf ", *(ary+Size*i+j));
 		}
 		printf("\n");
 	}
@@ -477,7 +478,7 @@ void InitAry(DataType *ary, int ary_size)
 	int i;
 	
 	for (i=0; i<ary_size; i++) {
-		fscanf(fp, "%f",  &ary[i]);
+		fscanf(fp, "%lf",  &ary[i]);
 	}
 }  
 
@@ -489,7 +490,7 @@ void PrintAry(DataType *ary, int ary_size)
 {
 	int i;
 	for (i=0; i<ary_size; i++) {
-		printf("%.2f ", ary[i]);
+		printf("%.8f ", ary[i]);
 	}
 	printf("\n\n");
 }
@@ -509,7 +510,7 @@ void printVectorToFile(char *filename, DataType *ary, int ary_size)
 	int i;
 	FILE *fp = fopen(filename, "w");
 	for (i=0; i<ary_size; i++) {
-		fprintf(fp, "%.8f ", ary[i]);
+		fprintf(fp, "%.8lf ", ary[i]);
 	}
 	fprintf(fp, "\n\n");
 	fclose(fp);
