@@ -321,8 +321,15 @@ __global__ void Fan1(DataType *m_cuda, DataType *a_cuda, int Size, int t)
 	//if(threadIdx.x + blockIdx.x * blockDim.x >= Size-1-t) printf(".");
 	//printf("blockIDx.x:%d,threadIdx.x:%d,Size:%d,t:%d,Size-1-t:%d\n",blockIdx.x,threadIdx.x,Size,t,Size-1-t);
 
+	
+
 	if(threadIdx.x + blockIdx.x * blockDim.x >= Size-1-t) return;
+	
 	*(m_cuda+Size*(blockDim.x*blockIdx.x+threadIdx.x+t+1)+t) = *(a_cuda+Size*(blockDim.x*blockIdx.x+threadIdx.x+t+1)+t) / *(a_cuda+Size*t+t);
+
+	if(isinf(__half2float(*(m_cuda+Size*(blockDim.x*blockIdx.x+threadIdx.x+t+1)+t)))) {
+		printf("%f / %f \n", __half2float(*(a_cuda+Size*(blockDim.x*blockIdx.x+threadIdx.x+t+1)+t)), __half2float(*(a_cuda+Size*t+t)));
+	}
 }
 
 /*-------------------------------------------------------
@@ -347,6 +354,10 @@ __global__ void Fan2(DataType *m_cuda, DataType *a_cuda, DataType *b_cuda,int Si
 		//printf("xidx:%d,yidx:%d\n",xidx,yidx);
 		b_cuda[xidx+1+t] -= m_cuda[Size*(xidx+1+t)+(yidx+t)] * b_cuda[t];
 	}
+
+	/* if(isnan(__half2float(b_cuda[xidx+1+t]))) {
+		printf("%f ", __half2float(b_cuda[xidx+1+t]));
+	} */
 }
 
 /*------------------------------------------------------
